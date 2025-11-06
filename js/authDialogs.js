@@ -1,15 +1,14 @@
-// authDialogs.js - initialize jQuery UI dialogs, validation and UI behaviors
+
 (function ($) {
   $(function () {
-    // ===== INITIALIZATION =====
+   
     function setupDialogs() {
-      // Only initialize if jQuery UI is available
+      
       if (!$.ui || !$.ui.dialog) return;
 
       // ===== VALIDATION SETUP =====
-      // 1.1 - Setup validation methods and form validation rules
+      
       if ($.validator) {
-        // 1.2 - Add custom validation method for allowed email characters
         $.validator.addMethod(
           "emailChars",
           function (value, element) {
@@ -18,7 +17,7 @@
           "Email can only contain letters, numbers, underscores, periods, and @ symbol"
         );
 
-        // 1.3 - Add enhanced email validation for TLD, multiple @, and missing @
+        
         $.validator.addMethod(
           "emailFormat",
           function (value, element) {
@@ -34,7 +33,7 @@
               return false;
             }
 
-            // Check for valid TLD (at least one dot after @ with 2+ characters after)
+           
             const parts = value.split("@");
             if (parts.length !== 2) return false;
 
@@ -63,7 +62,7 @@
           }
         );
 
-        // 1.4 - Add custom validation method for phone format
+        // Add custom validation method for phone format
         $.validator.addMethod(
           "phoneFormat",
           function (value, element) {
@@ -72,7 +71,7 @@
           "Please enter phone in format: 0000-000-0000"
         );
 
-        // 1.5 - Add password strength validation with requirements
+        // Add password strength validation with requirements
         $.validator.addMethod(
           "passwordStrength",
           function (value, element) {
@@ -160,7 +159,7 @@
           },
         });
 
-        // 1.7.1 - Remote check for login email existence (improves UX)
+        //  Remote check for login email existence 
         $(document).on('blur', '#loginEmail', function () {
           const $el = $(this);
           const email = $el.val().trim();
@@ -180,9 +179,9 @@
                 if ($msg && $msg.length) { $msg.addClass('d-none').text(''); }
                 console.debug('check_user_exists: exists=true for', email);
               } else {
-                // mark as not existing and show a friendly message targeting the validate-msg element in the login dialog
+                
                 $el.data('exists', false);
-                // Ensure we have a visible target. If not found, fall back to global element (older pages)
+                
                 if (!($msg && $msg.length)) {
                   console.debug('check_user_exists: no form-local #validate-msg found, falling back to global');
                   $msg = $('#validate-msg');
@@ -191,20 +190,20 @@
                 console.debug('check_user_exists: exists=false for', email);
               }
             }).catch(err => {
-              // ignore network errors here, server-side login will still validate
+              
               console.warn('check_user_exists failed', err);
               $el.data('exists', undefined);
             });
         });
 
-        // 1.7.2 - Remote check for signup email to prevent duplicate registrations
+        // Remote check for signup email to prevent duplicate registrations
         $(document).on('blur', '#signupEmail', function () {
           const $el = $(this);
           const email = $el.val().trim();
           const $form = $el.closest('form');
           const $msg = $form.find('#validate-msg');
           if (!email) { $el.data('exists', undefined); if ($msg && $msg.length) { $msg.addClass('d-none').text(''); } return; }
-          // Call API to check if user exists (POST to keep email out of URLs/logs)
+          
           fetch('./api/check_user_exists.php', {
             method: 'POST',
             credentials: 'same-origin',
@@ -238,7 +237,7 @@
             });
         });
 
-        // 1.7 - Setup login form validation rules and messages
+        // Setup login form validation rules and messages
         $("#loginForm").validate({
           rules: {
             email: {
@@ -264,7 +263,7 @@
             },
           },
           submitHandler: function (form) {
-            // Show loading state
+            
             const submitBtn = $("#loginSubmit");
             const originalText = submitBtn.text();
             submitBtn.prop('disabled', true).text('Logging in...');
@@ -274,13 +273,13 @@
             const $msg = $form.find('#validate-msg');
             if ($msg && $msg.length) { $msg.addClass('d-none').text(''); }
 
-            // If we have an explicit existence check and it says the account doesn't exist, block submit
+            
             const emailExists = $form.find('#loginEmail').data('exists');
             if (typeof emailExists !== 'undefined' && emailExists === false) {
-              // If no local message element, fallback to global
+             
               if (!($msg && $msg.length)) { $msg = $('#validate-msg'); }
               if ($msg && $msg.length) { $msg.removeClass('d-none').show().text('No account found with that email address.'); }
-              // Re-enable button
+             
               submitBtn.prop('disabled', false).text(originalText);
               return false; // prevent submit
             }
@@ -297,7 +296,7 @@
                 }).then(r => r.json())
                   .then(json => {
                     if (json && json.exists) {
-                      // proceed to submit
+                      
                       $form.find('#loginEmail').data('exists', true);
                       form.submit();
                     } else {
@@ -322,7 +321,7 @@
           },
         });
 
-        // 1.8 - Setup signup form validation rules and messages
+        // Setup signup form validation rules and messages
         $("#signupForm").validate({
           rules: {
             name: {
@@ -516,7 +515,7 @@
             },
         });
 
-        // 1.12 - Setup checkout form (cart) validation rules and messages
+        // Setup checkout form (cart) validation rules and messages
         // Removed redundant errorClass, validClass, errorElement, errorPlacement, highlight, unhighlight options
         $("#checkoutForm").validate({
           rules: {
@@ -625,7 +624,7 @@
           },
         });
 
-        // 1.11 - Handle input changes to remove success color when field is empty
+        // Handle input changes to remove success color when field is empty
         $(document).on(
           "input blur",
           "form input, form textarea, form select",
@@ -646,15 +645,15 @@
       }
 
       // ===== DIALOG SETUP =====
-      // 2.1 - Calculate navbar height for dialog positioning
+      // Calculate navbar height for dialog positioning
       function dialogMaxHeightOffset() {
         const nav = document.querySelector(".navbar");
         const navHeight = nav ? nav.getBoundingClientRect().height : 0;
-        // leave some breathing room (20px)
+        
         return Math.max(120, navHeight + 40);
       }
 
-      // 2.2 - Create responsive dialog options object with positioning
+      // Create responsive dialog options object with positioning
       function dialogOptions(width) {
         const maxH = window.innerHeight - dialogMaxHeightOffset();
         return {
@@ -666,8 +665,8 @@
           draggable: true,
           resizable: true,
           classes: {
-            "ui-dialog": "rounded-3", // Add custom class if needed
-            "ui-widget-overlay": "custom-overlay", // Add custom class to overlay
+            "ui-dialog": "rounded-3", 
+            "ui-widget-overlay": "custom-overlay", 
           },
           open: function () {
             // position below navbar center horizontally
@@ -682,7 +681,7 @@
         };
       }
 
-      // 2.3 - Initialize login and signup dialogs with specific widths
+      //  Initialize login and signup dialogs with specific widths
       $("#loginDialog").dialog(dialogOptions(400));
       $("#signupDialog").dialog(dialogOptions(520));
 
@@ -787,7 +786,7 @@
         }
       );
 
-      // 3.2 - Link from login dialog to signup dialog
+      // Link from login dialog to signup dialog
       $(document).on("click", "#openSignup", function (e) {
         e.preventDefault();
         $("#loginDialog").dialog("close");
@@ -810,7 +809,7 @@
         $(this).val(v);
       });
 
-      // 3.7 - Restrict email input to only allow letters, numbers, @, ., and _ on keydown
+      // Restrict email input to only allow letters, numbers, @, ., and _ on keydown
       function emailKeyFilter(e) {
         const allowed = /[A-Za-z0-9@._]/;
         const key = e.key;
@@ -820,7 +819,7 @@
           e.preventDefault();
         }
       }
-      // 3.8 - Apply email key filter to all email fields across forms
+    
       // Apply to all email fields: login, signup, contact forms, and checkout form
       $(document).on(
         "keydown",
@@ -829,19 +828,19 @@
       );
     }
 
-    // ===== INITIALIZATION =====
-    // 4.1 - Initialize dialogs if jQuery UI is available
+    
+    // Initialize dialogs if jQuery UI is available
     // If jQuery UI already loaded, init now
     if ($.ui && $.ui.dialog) setupDialogs();
 
-    // 4.2 - Watch for jQuery UI load and initialize when ready
+    
     // Otherwise watch for script load and init
     $(document).on("jquery-ui-loaded", function () {
       setupDialogs();
     });
 
-    // ===== WINDOW EVENTS =====
-    // 5.1 - Recompute dialog sizes/positions on window resize
+    
+    
     // Recompute dialog sizes/positions on window resize
     $(window).on("resize", function () {
       if ($.ui && $.ui.dialog) {

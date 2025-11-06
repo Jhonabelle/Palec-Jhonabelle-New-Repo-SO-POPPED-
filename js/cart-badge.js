@@ -5,7 +5,7 @@
     els.forEach(el => el.textContent = String(count || 0));
   }
 
-  // Try to use cart API if present
+  
   function refresh(){
     if (window.sopoppedCart && typeof window.sopoppedCart.getCount === 'function'){
       updateBadge(window.sopoppedCart.getCount());
@@ -21,4 +21,45 @@
       if (c !== null) updateBadge(c); else refresh();
     });
   });
+
+// js/cart-badge.js - Updated for session-based cart
+async function updateCartBadgeCount() {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get');
+
+        const response = await fetch('api/cart_operations.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.status === 401) {
+            // User not logged in
+            $('.flavorCoutCart').text('0');
+            return;
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+            $('.flavorCoutCart').text(result.item_count);
+        } else {
+            $('.flavorCoutCart').text('0');
+        }
+    } catch (error) {
+        console.error('Failed to update cart badge:', error);
+        $('.flavorCoutCart').text('0');
+    }
+}
+
+// Update badge on page load and when cart changes
+$(document).ready(function() {
+    updateCartBadgeCount();
+    
+    // Listen for custom cart update events
+    $(document).on('cartUpdated', function() {
+        updateCartBadgeCount();
+    });
+});
+
 })();

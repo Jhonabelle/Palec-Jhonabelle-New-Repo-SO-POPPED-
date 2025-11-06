@@ -36,9 +36,7 @@ if (!empty($errors)) {
 }
 
 try {
-    // Check if user exists and get user data
-    // First, attempt to fetch the user regardless of archived status so we can
-    // provide a specific message if the account is archived.
+    
     $stmt = $pdo->prepare("SELECT id, email, password_hash, first_name, last_name, phone, role, is_archived FROM users WHERE email = ? LIMIT 1");
     $stmt->execute([$email]);
     $user = $stmt->fetch();
@@ -49,9 +47,7 @@ try {
         exit;
     }
 
-    // If the account is archived, reject login with a clear message.
-    // Keep the message intentionally generic about account status to avoid leaking
-    // too much information, but still helpful for legitimate users.
+    // Check if account is archived/deactivated
     $isArchived = isset($user['is_archived']) ? (int)$user['is_archived'] : 0;
     if ($isArchived) {
         header('Location: ../home.php?login_result=error&login_message=' . urlencode('This account has been deactivated. Please contact support to reactivate your account.'));

@@ -32,8 +32,8 @@
               </div>
 
               <div class="d-flex gap-2 flex-column flex-sm-row">
-                <button id="pm-add-cart" class="btn btn-primary w-100 w-sm-auto">Add to cart</button>
-                <button id="pm-buy-now" class="btn btn-warning w-100 w-sm-auto">Buy now</button>
+                <button id="pm-add-cart" class="btn btn-primary w-100 w-sm-auto" data-product-id="">Add to cart</button>
+                <button id="pm-buy-now" class="btn btn-primary w-100 w-sm-auto" data-product-id="">Buy now</button>
               </div>
             </div>
           </div>

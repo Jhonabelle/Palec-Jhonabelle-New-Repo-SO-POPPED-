@@ -1814,4 +1814,20 @@ body .ui-widget-overlay {
 }
 
 
+.navbar {
+    z-index: 1030; 
+}
+
+
+body {
+    padding-top: 76px; 
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-top: 76px;
+    }
+}
+
+
 /*# sourceMappingURL=styles.css.map */

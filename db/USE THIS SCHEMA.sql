@@ -83,3 +83,21 @@ CREATE TABLE IF NOT EXISTS `contact_messages` (
   KEY `idx_contact_archived` (`is_archived`),
   CONSTRAINT `fk_contact_archived_by_user` FOREIGN KEY (`archived_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- Cart table
+CREATE TABLE IF NOT EXISTS `cart` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `product_id` INT UNSIGNED NOT NULL,
+  `quantity` INT UNSIGNED NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_cart_user_product` (`user_id`, `product_id`),
+  KEY `idx_cart_user_id` (`user_id`),
+  KEY `idx_cart_product_id` (`product_id`),
+  CONSTRAINT `fk_cart_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_cart_product` FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_cart_quantity_positive` CHECK (`quantity` >= 1)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

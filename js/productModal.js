@@ -1,5 +1,4 @@
-// productModal.js
-// Opens product modal when a product card is clicked.
+
 document.addEventListener('DOMContentLoaded', () => {
   const modalEl = document.getElementById('productModal');
   if (!modalEl) return;
@@ -33,16 +32,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update image
     const img = document.getElementById('pm-image');
-    // Prefer `image`, fall back to `image_path`, then to a local placeholder
     const rawPath = product.image || product.image_path || 'images/image.png';
     const resolvedSrc = resolveImagePath(rawPath);
     if (img) {
-      // Log for debugging
       console.debug('[productModal] openProduct', { id: product.id, rawPath, resolvedSrc });
       img.src = resolvedSrc;
       img.alt = product.name || 'Product';
 
-      // Fallback handler: replace broken images with a local placeholder
       img.onerror = () => {
         const placeholder = resolveImagePath('images/image.png');
         if (img.src !== placeholder) {
@@ -74,7 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addBtn) addBtn.toggleAttribute('disabled', !isAvailable);
     if (buyBtn) buyBtn.toggleAttribute('disabled', !isAvailable);
 
-    // Store ID for cart handlers
+    // Store ID for cart handlers - set data attribute on the button
+    if (addBtn) addBtn.setAttribute('data-product-id', String(product.id));
+    if (buyBtn) buyBtn.setAttribute('data-product-id', String(product.id));
+    
     modalEl.dataset.productId = String(product.id);
     bsModal.show();
   }
@@ -121,53 +120,93 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Cart actions
-  function addToCart(qty) {
-    const id = modalEl.dataset.productId;
-    if (!id) return;
+  // Cart actions using the new session-based cart system
+  async function addToCart(productId, quantity) {
+    try {
+      const formData = new FormData();
+      formData.append('action', 'add');
+      formData.append('product_id', productId);
+      formData.append('quantity', quantity);
 
-    const product = { id, qty };
-    const fullProduct = (window.__sopopped_products || [])
-      .find(p => String(p.id) === id);
+      const response = await fetch('api/cart_operations.php', {
+        method: 'POST',
+        body: formData
+      });
 
-    if (fullProduct) {
-      product.name = fullProduct.name;
-      product.price = Number(fullProduct.price) || 0;
-      product.description = fullProduct.description || '';
-    }
+      const result = await response.json();
 
-    if (window.sopoppedCart?.add) {
-      window.sopoppedCart.add(product);
-    } else {
-      document.dispatchEvent(new CustomEvent('product-add-to-cart', { detail: { id, qty } }));
+      if (result.success) {
+        // Show success message
+        showCartMessage(result.message, 'success');
+        
+        // Update cart badge
+        if (typeof updateCartBadgeCount === 'function') {
+          updateCartBadgeCount();
+        }
+        
+        // Trigger cart update event
+        $(document).trigger('cartUpdated');
+      } else {
+        showCartMessage(result.error, 'error');
+        
+        // If not logged in, show login dialog
+        if (response.status === 401) {
+          $('#loginDialog').dialog('open');
+        }
+      }
+    } catch (error) {
+      console.error('Add to cart failed:', error);
+      showCartMessage('An error occurred. Please try again.', 'error');
     }
   }
 
-  const addCartBtn = document.getElementById('pm-add-cart');
-  const buyNowBtn = document.getElementById('pm-buy-now');
+  function showCartMessage(message, type) {
+    // Create a temporary message display
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alert = $(`<div class="alert ${alertClass} alert-dismissible fade show position-fixed" style="top: 100px; right: 20px; z-index: 9999;" role="alert">
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>`);
+    
+    $('body').append(alert);
+    
+    setTimeout(() => {
+      alert.alert('close');
+    }, 3000);
+  }
 
+  // Add to cart button handler
+  const addCartBtn = document.getElementById('pm-add-cart');
   if (addCartBtn) {
     addCartBtn.addEventListener('click', () => {
-      const qty = Number(qtyInput?.value) || 1;
-      addToCart(qty);
-      bsModal.hide();
-    });
-  }
-
-  if (buyNowBtn) {
-    buyNowBtn.addEventListener('click', () => {
-      const qty = Number(qtyInput?.value) || 1;
-      addToCart(qty);
-      if (window.sopoppedCart?.add) {
-        window.location.href = 'cart.php';
-      } else {
-        document.dispatchEvent(new CustomEvent('product-buy-now', { detail: { id: modalEl.dataset.productId, qty } }));
+      const productId = addCartBtn.getAttribute('data-product-id');
+      const quantity = Number(qtyInput?.value) || 1;
+      
+      if (productId) {
+        addToCart(productId, quantity);
         bsModal.hide();
       }
     });
   }
 
-  // Click delegation: only use data-product-id + global array
+  // Buy now button handler
+  const buyNowBtn = document.getElementById('pm-buy-now');
+  if (buyNowBtn) {
+    buyNowBtn.addEventListener('click', () => {
+      const productId = buyNowBtn.getAttribute('data-product-id');
+      const quantity = Number(qtyInput?.value) || 1;
+      
+      if (productId) {
+        addToCart(productId, quantity).then(() => {
+          // Redirect to cart page after adding
+          window.location.href = 'cart.php';
+        });
+        bsModal.hide();
+      }
+    });
+  }
+
+  // Click delegation for product cards
   document.addEventListener('click', (e) => {
     const card = e.target.closest('.product-card');
     if (!card) return;

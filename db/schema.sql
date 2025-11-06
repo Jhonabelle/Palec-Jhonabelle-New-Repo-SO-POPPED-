@@ -130,3 +130,5 @@ INSERT INTO `products` (`sku`, `name`, `description`, `price`, `quantity`, `imag
 ON DUPLICATE KEY UPDATE `sku` = `sku`;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+
